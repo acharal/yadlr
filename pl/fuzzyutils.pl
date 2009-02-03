@@ -41,10 +41,10 @@ sup_degree([], Deg) :- equally_fuzzy(Deg, 0.0).
 sup_degree([Deg], Deg) :- !.
 sup_degree([Deg1 |DegRest], DegMax) :-
 	sup_degree(DegRest, Deg2),
-	(get_max(Deg1, Deg2) -> DegMax = Deg1; DegMax = Deg2).
+	(check_less_fuzzy(Deg2, Deg1) -> DegMax = Deg2; DegMax = Deg1).
 
 inf_degree([], Deg) :- equally_fuzzy(Deg, 0.0).
 inf_degree([Deg], Deg) :- !.
-inf_degree([Deg1 |DegRest], DegMax) :-
+inf_degree([Deg1 |DegRest], DegMin) :-
 	inf_degree(DegRest, Deg2),
-	(get_max(Deg2, Deg1) -> DegMax = Deg1; DegMax = Deg2).
+	(check_less_fuzzy(Deg1, Deg2) -> DegMin = Deg2; DegMin = Deg1).

@@ -4,7 +4,8 @@
 %%         Stasinos Konstantopoulos <stasinos@users.sourceforge.net>
 %% Created: 22 Aug 2006
 %% 
-%% Copyright (C) 2006-2008 Angelos Charalambidis and Stasinos Konstantopoulos
+%% Copyright (C) 2006-2008 Stasinos Konstantopoulos
+%% Copyright (C) 2007-2008 Angelos Charalambidis
 %%
 %% This program is free software; you can redistribute it and/or modify
 %% it under the terms of the GNU General Public License as published by
@@ -313,9 +314,12 @@ exists_each(A, B, Relation, Concept, Deg) :-
 exists_many(A, Relation, Concept, Degrees, Many) :-
 	atom(A), !,
 	findall((B,D), exists_each(A, B, Relation, Concept, D), OutList),
-	remove_duplicates(OutList, OutSet),	% we have to be sure that OutSet contains only distinct B's.
-	unzip(OutSet, _, Degrees),
-	length(OutSet, Many),
+	% OutSet contains only distinct role fillers
+	remove_duplicates(OutList, OutSet),
+	unzip(OutSet, _, Degrees1),
+	%remove_zeros(Degrees1, Degrees),
+	Degrees = Degrees1,
+	length(Degrees, Many),
 	!.
 
 exists_many(A, Relation, Concept, Degrees, Many) :-
@@ -377,7 +381,9 @@ atleast_find_max(InList, Relation, Concept, OutList, K, Max) :-
 	K2 is K + 1,
 	atleast_find_max(InList, Relation, Concept, OutList, K2, Max).
 
-%atmost_select(+InList, ?Relation, ?Concept, +Max, -OutList) :-
+
+% atmost_select(+InList, ?Relation, ?Concept, +Max, -OutList) :-
+
 atmost_select([], _, _,_, []).
 
 atmost_select([(A, InDeg) | Rest], Relation, Concept, Max, [(A, OutDeg) | OutList]) :-
@@ -385,17 +391,14 @@ atmost_select([(A, InDeg) | Rest], Relation, Concept, Max, [(A, OutDeg) | OutLis
 	relation_path(Relation),
 	concept_name_or_not(Concept),
 	exists_many(A, Relation, Concept, Degrees, N),
-	(N > Max ->
-		MaxPlusOne is Max + 1,
-		findall(Deg, (atleast_once(Degrees, MaxPlusOne, Deg1), tnorm(implication, Deg1, 0.0, Deg)), CompDegrees),
-		inf_degree(CompDegrees, CompDeg)
-		;
-		equally_fuzzy(CompDeg, 1.0)
-	),
+	MaxPlusOne is Max + 1,
+	findall(Deg,
+		(atleast_once(Degrees, MaxPlusOne, Deg1), tnorm(implication, Deg1, 0.0, Deg)),
+		CompDegrees),
+	inf_degree(CompDegrees, CompDeg),
 	tnorm(conjunction, InDeg, CompDeg, OutDeg1),
 	(var(OutDeg) -> OutDeg = OutDeg1 ; check_less_fuzzy(OutDeg1, OutDeg)),
 	atmost_select(Rest, Relation, Concept, Max, OutList).
-
 
 atmost_select(InList, Relation, Concept, Max, OutList) :-
 	var(Max), !,
@@ -433,7 +436,26 @@ atmost_find_max(InList, Relation, Concept, OutList, K, Max) :-
 	K2 is K + 1,
 	atmost_find_max(InList, Relation, Concept, OutList, K2, Max).
 
-% utilities
+
+% self_select( +InList, ?RelationName, -OutList )
+
+self_select( InList, Rel, OutList ) :-
+	relation_path( Rel ),
+	self_select_rec( InList, Rel, OutList ).
+	
+self_select_rec( [], _, [] ).
+
+self_select_rec( [(Instance, InDeg)|InList], Rel, [(Instance, OutDeg) | OutList] ) :-
+	relation_composition(Rel, Instance, Instance, Deg),
+	tnorm( conjunction, InDeg, Deg, OutDeg1 ),
+	(var(OutDeg) -> OutDeg = OutDeg1 ; check_less_fuzzy(OutDeg1, OutDeg)),
+	self_select_rec( InList, Rel, OutList ).
+
+
+
+%%%
+%%% utilities
+%%%
 
 unzip([], [], []).
 unzip([(A, B) | R], [A | RA], [B | RB]) :- unzip(R, RA, RB).
@@ -444,10 +466,18 @@ comb([X|A], [X|B]) :- comb(A, B).
 comb([_|A], B) :- comb(A, B).
 
 
+remove_zeros([],[]).
+remove_zeros([Degree|Rest], Rest2) :-
+	check_equally_fuzzy(Degree, 0.0),
+	remove_zeros(Rest, Rest2), !.
+remove_zeros([Degree|Rest], [Degree|Rest2]):-
+	remove_zeros(Rest, Rest2).
 
 
 
-%%%  yadlr compatibility
+%%%
+%%%  yadlr front-end
+%%%
 
 yadlr_init( KB ) :- 
 	retractKB( KB ).

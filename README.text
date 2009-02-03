@@ -14,14 +14,18 @@ evaluate multi-valued DL hypotheses, so there is no plan for providing
 TBox services in the forseeable future.
 
 
-Prolog API
-==========
+Prolog APIs
+===========
 
-The front-end to yadlr is the yadlr module in file yadlr.pl. Before
-loading the module, use_inference_engine/1 and use_algebra/1 must
-be asserted in the user namespace.
+yadlr provides two Prolog front-ends, yadlr and prodlr. Although the
+intension is to eventually allow all front-end and inference engine
+combinations, currently the yadlr can be used with the resolution and
+Prolog engine, and prodlr with the Prolog engine.
 
-The module provides the following predicates:
+Before loading either of the front-end modules, use_inference_engine/1
+and use_algebra/1 must be asserted in the user namespace.
+
+yadlr.pl provides the following predicates:
 
 yadlr_init( +KB )
 
@@ -39,6 +43,22 @@ set_proof_tree_log/1 ( +Filename|no )
 unset_proof_tree_log/0
 
 set_depth_limit/1 ( +YESNO )
+
+prodlr.pl provides the following predicates:
+
+declare_concept( +ConceptName, +SuperConceptName )
+assert_instance( +ConceptName, +InstanceName, +Degree )
+add_to_concept( +ConceptName, [ (+InstanceName, +Degree) ] )
+
+declare_relation( +RelationName, +DomainConceptName, +RangeConceptName )
+add_to_relation( +RelationName, +InstanceName, [ (+FillerInstanceName, +Degree) ] )
+
+concept_select( +InList, ?ConceptName, -OutList )
+forall_select( +InList, +RelationName, +ConceptName, -OutList )
+atleast_select( +InList, ?RelationName, ?ConceptName, +Min, -OutList )
+atmost_select( +InList, ?RelationName, ?ConceptName, +Max, -OutList )
+self_select( +InList, ?RelationName, -OutList )
+
 
 
 Formula Syntax

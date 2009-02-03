@@ -1,8 +1,11 @@
-%% fuzzy ALC reasoner
+%% CLP(r) implementation of Lukasiewicz norms
 %%
-%% Author: Stasinos Konstantopoulos <stasinosk@gmail.com>
+%% Authors: Stasinos Konstantopoulos <stasinos@users.sourceforge.net>
+%%          Angelos Charalambidis <acharal@users.sourceforge.net>
 %% Created: 4-6-2007
-%% Copyright (C) 2007 Stasinos Konstantopoulos <stasinosk@gmail.com>
+%%
+%% Copyright (C) 2007-2008 Stasinos Konstantopoulos
+%% Copyright (C) 2008 Angelos Charalambidis
 %%
 %% This program is free software; you can redistribute it and/or modify
 %% it under the terms of the GNU General Public License as published by
@@ -97,8 +100,12 @@ tnorm( disjunction, X, Y, Res ) :-
 tnorm( implication, X, Y, Res ) :-
 	{ Res =:= min(1.0, 1.0 - X + Y) }.
 
-tnorm(weakconjunction, X, Y, Res) :-
+tnorm( weakconjunction, X, Y, Res) :-
+	{ Res =:= min(X, Y) }.
+
+tnorm( weakdisjunction, X, Y, Res) :-
 	{ Res =:= max(X, Y) }.
+
 
 % modus ponens: ( (H <- B) and B ) -> H
 % fuzzy degree of        X and Y   -> R
