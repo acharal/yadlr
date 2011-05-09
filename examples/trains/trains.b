@@ -1,2 +1,2 @@
 :- consult( '../aleph_dlsettings.pl' ).
-:- consult( 'trains1_domain' ).
+:- consult( 'trains_domain' ).
