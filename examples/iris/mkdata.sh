@@ -1,13 +1,13 @@
 #!/bin/bash
 
-%% This script transforms the Iris UCI dataset into suitable training example
-%% format for using Aleph with prodlr.
-%% Please download http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data
-%% and then pipe it into this script.
-%%
-%% Author: Stasinos Konstantopoulos <stasinos@users.sourceforge.net>
-%% Created: 28-2-2008
-%% This file is in the public domain.
+# This script transforms the Iris UCI dataset into suitable training example
+# format for using Aleph with prodlr.
+# Please download http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data
+# and then pipe it into this script.
+#
+# Author: Stasinos Konstantopoulos <stasinos@users.sourceforge.net>
+# Created: 28-2-2008
+# This file is in the public domain.
 
 
 MIN_SEP_LEN=4.3
@@ -80,6 +80,11 @@ cat ws.pl >> iris.bg
 
 
 rm ls.pl ws.pl lp.pl wp.pl
+
+for C in $CATEGORIES
+do
+  ln -s iris.bg ${C}.b
+done
 
 exit 0
 
