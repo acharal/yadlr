@@ -1,5 +1,4 @@
 
-:- consult( '../aleph_dlsettings.pl' ).
 
 :- declare_concept( train ),
 	declare_concept( car ),
