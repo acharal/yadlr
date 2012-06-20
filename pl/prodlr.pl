@@ -4,8 +4,8 @@
 %%         Stasinos Konstantopoulos <stasinos@users.sourceforge.net>
 %% Created: 22 Aug 2006
 %% 
-%% Copyright (C) 2006-2008 Stasinos Konstantopoulos
-%% Copyright (C) 2007-2008 Angelos Charalambidis
+%% Copyright (C) 2006-2012 Stasinos Konstantopoulos
+%% Copyright (C) 2007-2012 Angelos Charalambidis
 %%
 %% This program is free software; you can redistribute it and/or modify
 %% it under the terms of the GNU General Public License as published by
@@ -21,27 +21,34 @@
 %% with this program; if not, write to the Free Software Foundation, Inc.,
 %% 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+:- module(prodlr, [declare_concept/1, declare_concept/2, add_to_concept/2,
+                   declare_relation/3, add_to_relation/3,
+                   concept_select/3, forall_select/4, atleast_select/5, atmost_select/5, self_select/3,
+                   relation_path/3, concept_name/1, concept_name_or_not/1,
+                   inout_thread/3, append_thread/3, connect_thread/1, legitimate_literal/1,thread_itemfunctor/1]).
 
 :- assert(user:use_algebra(alg_lukasiewicz)).
+
 :- use_module( fuzzyutils ).
 
 :- use_module( library(lists) ).
 
-:- dynamic concept_name/1,  concept_assert/3,  concept_sub/3.
+:- dynamic concept_name/1,  concept_assert/3,  concept_sub/3, concept_sub/2.
 :- dynamic relation_name/3, relation_assert/4, relation_sub/4.
 
-prolog_engine(swi) :- current_prolog_flag(argv, [pl|_]).
-prolog_engine(yap) :- predicate_property(yap_flag(_,_), built_in).
+%prolog_engine(swi) :- current_prolog_flag(argv, [pl|_]).
+%prolog_engine(yap) :- predicate_property(yap_flag(_,_), built_in).
 
 init_engine(swi) :-
 	assert((remove_duplicates([], []))),
 	assert((remove_duplicates([H|X], [H|Y]) :- delete(X, H, Z), remove_duplicates(Z,Y))).
 
 init_engine(yap) :-
-	use_module( library(swi) ).
+	use_module( library(dialect/swi) ).
 
 
-:- prolog_engine(Engine), init_engine(Engine).
+%:- prolog_engine(Engine), init_engine(Engine).
+:- init_engine(swi).
 
 % concept_name(?concept)
 % predicate returns all the declared concepts.
@@ -55,6 +62,7 @@ declare_concept(Concept, Super) :-
 	atom(Concept),
 	atom(Super),
 	assert(concept_name(Concept)),
+	assert(concept_sub(Concept,Super)),
 	assert((concept_sub(Super, I, Deg) :- concept(Concept, I, Deg))).
 
 declare_concept(Concept) :- declare_concept(Concept, thing).
@@ -246,9 +254,14 @@ relation_path(Path, Domain, Range) :-
 relation_path(Path, Domain, Range) :-
 	relation_path_arb(Path, Domain, Range).
 
+
+relation_range(RelationPath, Range) :-
+	relation_path(RelationPath, _, Range).
+
 relation_range(RelationPath, Range) :-
 	relation_path(RelationPath, _, Range2),
-	concept_subsumed(Range2, Range).
+	%concept_subsumed(Range2, Range).
+	concept_sub(Range2, Range).
 
 relation_path(Path) :- relation_path(Path, _, _).
 
@@ -473,7 +486,93 @@ remove_zeros([Degree|Rest], Rest2) :-
 remove_zeros([Degree|Rest], [Degree|Rest2]):-
 	remove_zeros(Rest, Rest2).
 
+num(0).
+num(1).
+num(2).
+num(3).
+num(4).
+num(5).
 
+thread_itemfunctor(concept_select/3).
+thread_itemfunctor(forall_select/4).
+thread_itemfunctor(atleast_select/5).
+thread_itemfunctor(atmost_select/5).
+thread_itemfunctor(self_select/3).
+
+inout_lit(Term, Input, Output) :-
+    Term =.. List,
+    length(List, N),
+    N >= 3,
+    List = [ _, Input | _ ],
+    last(List, Output).
+
+inout_thread(','(A, B), Input, Output) :-
+    inout_lit(A, Input, FirstOut),
+    inout_thread(B, FirstOut, Output), !.
+
+inout_thread(Atom, Input, Output) :- inout_lit(Atom, Input, Output), !.
+
+% has_pieces(+Body, -AtomList).
+% returns the body as a list of atoms
+has_pieces(true, []) :- !.
+has_pieces(','(A, R), [A|Z]) :- has_pieces(R, Z), !.
+has_pieces(A, [A]) :- !.
+
+% concat_thread(+List, -Body)
+% concat_thread: concat a list of literals as a thread.
+concat_thread([A], A) :- !.
+concat_thread([A|Z], ','(A, Z1)) :- 
+    concat_thread(Z, Z1),
+    inout_lit(A, _, Out),
+    inout_thread(Z1, Out, _).
+
+% count_literals(+Literals, -Count)
+count_literals(Lits, Count) :- has_pieces(Lits, LitList), length(LitList, Count).
+
+% connect_thread(+Clause)
+% connect_thread: Connect the head variables with the body variables.
+connect_thread((Head:-Body)) :-
+    inout_lit(Head, Input, Output),
+    inout_thread(Body, Input, Output), !.
+
+% append_thread(+Literal, +Body, -BodyWithLit)
+% append and connect the Literal to the Body resulting to BodyWithLit.
+append_thread(Lit, Body, BodyWith) :-
+    has_pieces(Body, Atoms),
+    append(Atoms, [Lit], Atoms2),
+    concat_thread(Atoms2, BodyWith), !.
+
+concept_r(C, C).
+concept_r(C, R) :- concept_sub(C, R).
+
+% legitimate_literal(?Lit)
+% legitimate_literal: generates or validates if the literal is legidimate.
+% In other words, if the concepts and the relation path arguments are filled
+% with a value that make sense.
+legitimate_literal(Lit) :-
+	concept_name_or_not(C),
+	Lit = concept_select(A, C, B).
+
+legitimate_literal(Lit) :-
+	relation_path(R, _, Range),
+	concept_r(C, Range),
+	Lit = forall_select(A, R, C, B).
+
+legitimate_literal(Lit) :-
+	relation_path(R, _, Range),
+	concept_r(C, Range),
+	num(N),
+	Lit = atleast_select(A, R, C, N, B).
+
+legitimate_literal(Lit) :-
+	relation_path(R, _, Range),
+	concept_r(C, Range),
+	num(N),
+	Lit = atmost_select(A, R, C, N, B).
+
+legitimate_literal(Lit) :-
+	relation_path(R),
+	Lit = self_select(A, R, B).
 
 %%%
 %%%  yadlr front-end
