@@ -549,30 +549,15 @@ concept_r(C, R) :- concept_sub(C, R).
 % legitimate_literal: generates or validates if the literal is legidimate.
 % In other words, if the concepts and the relation path arguments are filled
 % with a value that make sense.
-legitimate_literal(Lit) :-
-	concept_name_or_not(C),
-	Lit = concept_select(A, C, B).
+legitimate_literal(concept_select(_,C,_)) :- concept_name_or_not(C).
 
-legitimate_literal(Lit) :-
-	relation_path(R, _, Range),
-	concept_r(C, Range),
-	Lit = forall_select(A, R, C, B).
+legitimate_literal(forall_select(_, R, C, _)) :- relation_path(R, _, Range), concept_r(C, Range).
 
-legitimate_literal(Lit) :-
-	relation_path(R, _, Range),
-	concept_r(C, Range),
-	num(N),
-	Lit = atleast_select(A, R, C, N, B).
+legitimate_literal(atleast_select(_, R, C, N, _)) :- num(N), relation_path(R, _, Range), concept_r(C, Range).
 
-legitimate_literal(Lit) :-
-	relation_path(R, _, Range),
-	concept_r(C, Range),
-	num(N),
-	Lit = atmost_select(A, R, C, N, B).
+legitimate_literal(atmost_select(_, R, C, N, _)) :- num(N), relation_path(R, _, Range), concept_r(C, Range).
 
-legitimate_literal(Lit) :-
-	relation_path(R),
-	Lit = self_select(A, R, B).
+legitimate_literal(self_select(_, R, B)) :- relation_path(R).
 
 %%%
 %%%  yadlr front-end
