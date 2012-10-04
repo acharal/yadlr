@@ -33,14 +33,14 @@ yadlr.pl provides the following predicates:
 
     yadlr_assert( +KB, +Formula, +Degree )
 
-    check_membership/5 ( +KB, +InstanceName, +ConceptName, +Degree, -Restrictions )
-    check_types/5 ( +KB, +InstanceName, +Degree, ?ConceptNames, -Restrictions )
-    check_members/5 ( +KB, +ConceptName, +Degree, ?InstanceNames, -Restrictions )
+    check_membership( +KB, +InstanceName, +ConceptName, +Degree, -Restrictions )
+    check_types( +KB, +InstanceName, +Degree, ?ConceptNames, -Restrictions )
+    check_members( +KB, +ConceptName, +Degree, ?InstanceNames, -Restrictions )
 
-    set_proof_tree_log/1 ( +Filename|no )
-    unset_proof_tree_log/0
+    set_proof_tree_log( +Filename|no )
+    unset_proof_tree_log
 
-    set_depth_limit/1 ( +YESNO )
+    set_depth_limit( +YESNO )
 ```
 
 prodlr.pl provides the following predicates:
