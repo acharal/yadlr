@@ -23,7 +23,7 @@
 
 
 % yadlr alias
-file_search_path(yadlr, X) :- absolute_file_name('.', X).
+file_search_path(yadlr, X) :- absolute_file_name('../tools/yadlr/pl', X).
 
 % aleph alias must resolve to the directory where aleph.pl exists.
 % you can download aleph from http://www.comlab.ox.ac.uk/oucl/research/areas/machlearn/Aleph/aleph.pl
@@ -33,6 +33,8 @@ file_search_path(aleph, X) :- absolute_file_name('../tools/aleph/', X).
 :- use_module(yadlr(prodlr)).
 
 :- consult(aleph(aleph)).
+
+:- consult(refine).
 
 :- assert(('$aleph_sat_terms'(v,v,v,v) :- fail) ).
 :- assert(('$aleph_sat_atom'(v,v) :- fail) ).
@@ -45,7 +47,10 @@ aleph_settings :-
    set(depth, 50),
    set(clauselength, 3),
    set(verbosity, 100),
-   set(check_useless, true), !.
+   set(check_useless, true),
+   set(refinelitgen, user), 
+   set(refinethreadvar, list), 
+   !.
 
 set_determinations(Pred, []).
 set_determinations(Pred, [L|R]) :- 
@@ -55,38 +60,44 @@ set_determinations(Pred, [L|R]) :-
 set_predicate(Pred) :-
    Arity = 2,
    functor(Head, Pred, Arity),
-   arg(1, Head, +inlist),
-   arg(2, Head, -outlist),
+   (setting(construct_bottom, reduction), 
+    setting(refine, user)
+   ->  setting(refinethreadvar, Template),
+       arg(1, Head, +Template),
+       arg(2, Head, -Template)
+   ;   arg(1, Head, +inlist),
+       arg(2, Head, -outlist)
+   ),
    modeh( *, Head),
    findall(X, thread_itemfunctor(X), Determinations),
    set_determinations(Pred/Arity, Determinations).
 
 set_body :-
-   mode( *, concept_select(+inlist, #concept_name_or_not, +outlist) ),
-   mode( *, forall_select(+inlist, #relation_path, #concept_name_or_not, +outlist) ),
-   mode( *, atleast_select(+inlist, #relation_path, #concept_name_or_not, #num, +outlist) ),
-   mode( *, atmost_select(+inlist, #relation_path, #concept_name_or_not, #num, +outlist) ),
-   mode( *, self_select(+inlist, #relation_path, +outlist) ),
-   mode( *, concept_select(+inlist, #concept_name_or_not, -list) ),
-   mode( *, forall_select(+inlist, #relation_path, #concept_name_or_not, -list) ),
-   mode( *, atleast_select(+inlist, #relation_path, #concept_name_or_not, #num, -list) ),
-   mode( *, atmost_select(+inlist, #relation_path, #concept_name_or_not, #num, -list) ),
-   mode( *, self_select(+inlist, #relation_path, -list) ),
-   mode( *, concept_select(+list, #concept_name_or_not, +outlist) ),
-   mode( *, forall_select(+list, #relation_path, #concept_name_or_not, +outlist) ),
-   mode( *, atleast_select(+list, #relation_path, #concept_name_or_not, #num, +outlist) ),
-   mode( *, atmost_select(+list, #relation_path, #concept_name_or_not, #num, +outlist) ),
-   mode( *, self_select(+list, #relation_path, +outlist) ),
-   mode( *, concept_select(+list, #concept_name_or_not, -list) ),
-   mode( *, forall_select(+list, #relation_path, #concept_name_or_not, -list) ),
-   mode( *, atleast_select(+list, #relation_path, #concept_name_or_not, #num, -list) ),
-   mode( *, atmost_select(+list, #relation_path, #concept_name_or_not, #num, -list) ),
-   mode( *, self_select(+list, #relation_path, -list) ).
+   modeb( *, concept_select(+inlist, #concept_name_or_not, +outlist) ),
+   modeb( *, forall_select(+inlist, #relation_path, #concept_name_or_not, +outlist) ),
+   modeb( *, atleast_select(+inlist, #relation_path, #concept_name_or_not, #num, +outlist) ),
+   modeb( *, atmost_select(+inlist, #relation_path, #concept_name_or_not, #num, +outlist) ),
+   modeb( *, self_select(+inlist, #relation_path, +outlist) ),
+   modeb( *, concept_select(+inlist, #concept_name_or_not, -list) ),
+   modeb( *, forall_select(+inlist, #relation_path, #concept_name_or_not, -list) ),
+   modeb( *, atleast_select(+inlist, #relation_path, #concept_name_or_not, #num, -list) ),
+   modeb( *, atmost_select(+inlist, #relation_path, #concept_name_or_not, #num, -list) ),
+   modeb( *, self_select(+inlist, #relation_path, -list) ),
+   modeb( *, concept_select(+list, #concept_name_or_not, +outlist) ),
+   modeb( *, forall_select(+list, #relation_path, #concept_name_or_not, +outlist) ),
+   modeb( *, atleast_select(+list, #relation_path, #concept_name_or_not, #num, +outlist) ),
+   modeb( *, atmost_select(+list, #relation_path, #concept_name_or_not, #num, +outlist) ),
+   modeb( *, self_select(+list, #relation_path, +outlist) ),
+   modeb( *, concept_select(+list, #concept_name_or_not, -list) ),
+   modeb( *, forall_select(+list, #relation_path, #concept_name_or_not, -list) ),
+   modeb( *, atleast_select(+list, #relation_path, #concept_name_or_not, #num, -list) ),
+   modeb( *, atmost_select(+list, #relation_path, #concept_name_or_not, #num, -list) ),
+   modeb( *, self_select(+list, #relation_path, -list) ).
 
 
 config(Pred,reduction) :- 
    set(construct_bottom, reduction),
-   set(refine, user),
+   set(refine, auto),
    aleph_settings,
    set_predicate(Pred),
    set_body.
@@ -102,28 +113,16 @@ init_learn(Pred,Example, Config) :-
    config(Pred,Config).
 
 learn(Pred,Example,Config) :-
-   init_learn(Pred,Example, Config), !, 
+   init_learn(Pred,Example, Config), !,
+   %leash(off), 
+   %trace,
+   %sat(1). 
    induce.
 
-learn(Pred,Example) :- learn(Pred,Example, reduction).
+learn(Pred,Example) :- learn(Pred,Example,reduction).
 
 learn(Example) :- learn(target,Example).
 
-%refine(false, target(A, B)) :- !.
-refine(false, Head) :-
-   '$aleph_global'(modeh, modeh(_,Pred)),
-   functor(Pred, Name, Arity),
-   functor(Head, Name, Arity),
-   Head \== false.
-
-refine((Head:-Body), (Head:-Body2)):- !,
-   legitimate_literal(Lit),
-   copy_term(Body, Body1),
-   append_thread(Lit, Body1, Body2),
-   connect_thread((Head:-Body2)).
-
-refine(Head, Clause) :- !,
-   refine((Head:-true), Clause).
 
 false :-
    hypothesis(Head, Body, _),
