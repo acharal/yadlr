@@ -53,8 +53,16 @@ symbol_declarations :-
 	yadlr_instance( kb, panathinaikos ),
 	yadlr_instance( kb, napoli ),
 	yadlr_instance( kb, argentina ),
+	yadlr_instance( kb, ec88 ),
+	yadlr_instance( kb, ec92 ),
+	yadlr_instance( kb, uefa89 ),
+	yadlr_instance( kb, serieA87 ),
+	yadlr_instance( kb, serieA88 ),
+	yadlr_instance( kb, serieA89 ),
+	yadlr_instance( kb, serieA90 ),
 	yadlr_instance( kb, serieA91 ),
 	yadlr_instance( kb, superleague91 ).
+
 
 crisp_domain_axioms :-
 	yadlr_assert( kb, all(X, dlimplies(sports_club(X), team(X)) ), 1.0 ),
